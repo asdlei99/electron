@@ -75,6 +75,10 @@ class ExtendedWebContentsObserver : public base::CheckedObserver {
   virtual void OnRendererResponsive() {}
   virtual void OnDraggableRegionsUpdated(
       const std::vector<mojom::DraggableRegionPtr>& regions) {}
+  virtual void OnMove(const gfx::Rect& rect) {}
+  virtual void OnActivate() {}
+  virtual void OnPageTitleUpdated(const base::string16& title,
+                                  bool explicit_set) {}
 
  protected:
   ~ExtendedWebContentsObserver() override {}

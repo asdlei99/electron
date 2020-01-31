@@ -222,6 +222,30 @@ void BrowserWindow::OnDraggableRegionsUpdated(
   UpdateDraggableRegions(regions);
 }
 
+void BrowserWindow::OnMove(const gfx::Rect& rect) {
+  // window.resizeTo(...)
+  // window.moveTo(...)
+  window()->SetBounds(rect, false);
+}
+
+void BrowserWindow::OnActivate() {
+  // Hide the auto-hide menu when webContents is focused.
+#if !defined(OS_MACOSX)
+  if (IsMenuBarAutoHide() && IsMenuBarVisible())
+    window()->SetMenuBarVisibility(false)
+#endif
+}
+
+void BrowserWindow::OnPageTitleUpdated(const base::string16& title,
+                                       bool explicit_set) {
+  // Change window title to page title.
+  auto self = GetWeakPtr();
+  if (!Emit("page-title-updated", title, explicit_set)) {
+    if (self)  // this might be destroyed in the event handler.
+      SetTitle(base::UTF16ToUTF8(title));
+  }
+}
+
 void BrowserWindow::RequestPreferredWidth(int* width) {
   *width = web_contents()->GetPreferredSize().width();
 }
