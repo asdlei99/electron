@@ -72,6 +72,9 @@ v8::Local<v8::Value> ToBuffer(v8::Isolate* isolate, void* val, int size) {
     return buffer.ToLocalChecked();
 }
 
+// Global references to prevent window from garbage collection.
+std::map<uint32_t, v8::Global<v8::Value>> g_window_objects;
+
 }  // namespace
 
 TopLevelWindow::TopLevelWindow(v8::Isolate* isolate,
@@ -120,6 +123,9 @@ TopLevelWindow::~TopLevelWindow() {
   // Destroy the native window in next tick because the native code might be
   // iterating all windows.
   base::ThreadTaskRunnerHandle::Get()->DeleteSoon(FROM_HERE, window_.release());
+
+  // Remove global reference so the JS object can be garbage collected.
+  g_window_objects.erase(weak_map_id());
 }
 
 void TopLevelWindow::InitWith(v8::Isolate* isolate,
@@ -135,6 +141,9 @@ void TopLevelWindow::InitWith(v8::Isolate* isolate,
     DCHECK(!parent.IsEmpty());
     parent->child_windows_.Set(isolate, weak_map_id(), wrapper);
   }
+
+  // Reference this object in case it got garbage collected.
+  g_window_objects[weak_map_id()] = v8::Global<v8::Value>(isolate, wrapper);
 }
 
 void TopLevelWindow::WillCloseWindow(bool* prevent_default) {
